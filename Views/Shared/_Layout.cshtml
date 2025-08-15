@@ -1,0 +1,170 @@
+﻿@using BiletSatis.Models
+@using Microsoft.AspNetCore.Identity
+@using BiletSatisWebApp.Models
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] </title>
+
+    <link rel="icon" type="image/x-icon" href="~/images/indir.ico" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+
+    <style>
+       
+
+        .ozel-footer {
+            background-color: cornflowerblue;
+            color: white;
+            padding-top: 15px; 
+            padding-bottom: 15px;
+            font-size: 0.9rem; /* Yazılar biraz küçük */
+        }
+
+            .ozel-footer h5 {
+                font-size: 1rem;
+                margin-bottom: 8px;
+            }
+
+            .ozel-footer p {
+                margin-bottom: 5px;
+            }
+
+            .ozel-footer ul {
+                padding-left: 0;
+                margin-bottom: 5px;
+            }
+
+                .ozel-footer ul li {
+                    margin-bottom: 4px;
+                }
+
+            .ozel-footer .fs-4 {
+                font-size: 1.2rem !important; /* Sosyal ikonlar daha ufak */
+            }
+
+
+        .ozel-navbar {
+            background-color: cornflowerblue; /* pastel mavi */
+        }
+
+            /* Linkler arası boşluk */
+            .ozel-navbar .navbar-nav .nav-item {
+                margin-left: 20px;
+                margin-right: 20px;
+            }
+
+            /* Yazılar beyaz */
+            .ozel-navbar .nav-link,
+            .ozel-navbar .navbar-brand {
+                color: white !important;
+            }
+
+                /* Hover efekti */
+                .ozel-navbar .nav-link:hover {
+                    background-color: rgba(255, 255, 255, 0.2);
+                    border-radius: 5px;
+                    color: white !important;
+                }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark ozel-navbar py-3">
+        <div class="container-fluid">
+            <!-- LOGO -->
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img src="/images/logo.png?v=4" alt="Rota Bilet Logo" style="height:45px; width:auto;">
+                
+            </a>
+
+            <!-- Toggle Button (Mobil) -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <!-- Menü -->
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-house-door-fill"></i> Ana Sayfa</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/"><i class="bi bi-ticket-perforated-fill"></i> Bilet Satış</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/Home/Hakkimizda"><i class="bi bi-info-circle-fill"></i> Hakkımızda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/Home/Iletisim"><i class="bi bi-envelope-fill"></i> İletişim</a></li>
+                    @using Microsoft.AspNetCore.Http
+                    @inject IHttpContextAccessor HttpContextAccessor
+
+                    <li class="nav-item">
+                        @if (SignInManager.IsSignedIn(User))
+                        {
+                            var currentUser = await UserManager.GetUserAsync(User);
+                            <a class="nav-link" href="@Url.Action("Profile", "Account")">
+                                <i class="bi bi-person-circle"></i> @currentUser.Ad @currentUser.Soyad
+                            </a>
+                        }
+                        else
+                        {
+                            <a class="nav-link" href="@Url.Action("Login", "Account")">
+                                <i class="bi bi-person-circle"></i> Giriş Yap
+                            </a>
+                        }
+                    </li>
+                </ul>
+
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sayfanın içeriği -->
+    <div class="container mt-4">
+        @RenderBody()
+    </div>
+    <!-- Footer -->
+    <footer class="ozel-footer mt-5 py-4">
+        <div class="container text-center text-white">
+            <div class="row">
+                <!-- Hakkımızda -->
+                <div class="col-md-4 mb-3">
+                    <h5>Rota Bilet</h5>
+                    <p>Seyahatin en kolay hali. Otobüs, uçak ve tren biletlerini tek yerden satın alın.</p>
+                </div>
+
+                <!-- Hızlı Linkler -->
+                <div class="col-md-4 mb-3">
+                    <h5>Hızlı Linkler</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="/" class="text-white text-decoration-none">Ana Sayfa</a></li>
+                        <li><a href="/" class="text-white text-decoration-none">Bilet Satış</a></li>
+                        <li><a href="/Home/Hakkimizda" class="text-white text-decoration-none">Hakkımızda</a></li>
+                        <li><a href="/Home/Iletisim" class="text-white text-decoration-none">İletişim</a></li>
+                    </ul>
+                </div>
+
+                <!-- Sosyal Medya -->
+                <div class="col-md-4 mb-3">
+                    <h5>Bizi Takip Edin</h5>
+                    <a href="#" class="text-white me-3 fs-4"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="text-white me-3 fs-4"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="text-white fs-4"><i class="bi bi-twitter"></i></a>
+                </div>
+            </div>
+            <hr class="border-light">
+            <p class="mb-0">&copy; 2025 Rota Bilet. Tüm hakları saklıdır.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    @RenderSection("Scripts", required: false)
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+</body>
+</html>
+

@@ -1,0 +1,153 @@
+﻿@{
+    Layout = "_Layout";
+}
+
+@{
+    ViewData["Title"] = "ROTA BİLET- Anasayfa";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+    /* Kartların genel görünümü */
+    .kart {
+        position: relative;
+        overflow: hidden;
+        height: 250px; /* Kartların eşit yüksekliği */
+        cursor: pointer;
+        border-radius: 15px;
+    }
+
+        /* Kart resimleri */
+        .kart img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Resimler taşmadan sığar */
+            filter: brightness(60%); /* Hafif karartma */
+            transition: transform 0.3s;
+        }
+
+        /* Hover efekti */
+        .kart:hover img {
+            transform: scale(1.05);
+        }
+
+        /* Kartın içindeki yazılar */
+        .kart .kart-icerik {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+        }
+
+            .kart .kart-icerik h5 {
+                font-size: 1.5rem;
+                font-weight: bold;
+            }
+
+</style>
+
+
+
+<div class="container mt-5">
+
+    <!-- Başlık -->
+    <div class="text-center mb-5">
+        <h1 class="display-4 text-primary">ROTA BİLET</h1>
+        <p class="lead">Kolayca bilet al, seyahatini planla.</p>
+    </div>
+
+    <!-- Kartlar -->
+    <div class="row g-4">
+
+        <!-- Otobüs -->
+        <div class="col-md-4 mb-3">
+            <a href="/Bilet/Otobus" class="text-decoration-none">
+                <div class="card kart shadow-sm">
+                    <img src="/images/otobus.jpg" alt="Otobüs">
+                    <div class="kart-icerik">
+                        <h5>Otobüs Bileti Ara</h5>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Uçak -->
+        <div class="col-md-4 mb-3">
+            <a href="/Bilet/Ucak" class="text-decoration-none">
+                <div class="card kart shadow-sm">
+                    <img src="/images/ucak.jpg" alt="Uçak">
+                    <div class="kart-icerik">
+                        <h5>Uçak Bileti Ara</h5>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Tren -->
+        <div class="col-md-4 mb-3">
+            <a href="/Bilet/Tren" class="text-decoration-none">
+                <div class="card kart shadow-sm">
+                    <img src="/images/tren.jpg" alt="Tren">
+                    <div class="kart-icerik">
+                        <h5>Tren Bileti Ara</h5>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <div class="container my-5">
+    <div class="row text-center">
+
+        <!-- Hızlı ve Kolay Biletleme -->
+        <div class="col-md-3 mb-3">
+            <div class="p-4 shadow rounded h-100" style="background-color: #f3f8ff;">
+                <i class="bi bi-lightning-charge-fill fs-1 text-primary mb-3"></i>
+                <h5 class="mb-3 text-primary">Hızlı ve Kolay Biletleme</h5>
+                <p class="mb-0">
+                    Sadece birkaç tıkla otobüs, uçak ve tren biletinizi kolayca satın alın.
+                </p>
+            </div>
+        </div>
+
+        <!-- Güvenli Ödeme -->
+        <div class="col-md-3 mb-3">
+            <div class="p-4 shadow rounded h-100" style="background-color: #fff7f3;">
+                <i class="bi bi-shield-check fs-1 text-success mb-3"></i>
+                <h5 class="mb-3 text-success">Güvenli Ödeme</h5>
+                <p class="mb-0">
+                    Kart bilgileriniz şifrelenir, ödemeleriniz %100 güvence altındadır.
+                </p>
+            </div>
+        </div>
+
+        <!-- Tüm Seferler Tek Ekranda -->
+        <div class="col-md-3 mb-3">
+            <div class="p-4 shadow rounded h-100" style="background-color: #fffdee;">
+                <i class="bi bi-map-fill fs-1 text-warning mb-3"></i>
+                <h5 class="mb-3 text-warning">Tüm Seferler Tek Ekranda</h5>
+                <p class="mb-0">
+                    Tüm firmaların seferlerini tek ekranda karşılaştırın, size en uygununu seçin.
+                </p>
+            </div>
+        </div>
+
+        <!-- 7/24 Destek -->
+        <div class="col-md-3 mb-3">
+            <div class="p-4 shadow rounded h-100" style="background-color: #f9f3ff;">
+                <i class="bi bi-headset fs-1 text-danger mb-3"></i>
+                <h5 class="mb-3 text-danger">7/24 Destek</h5>
+                <p class="mb-0">
+                    Seyahatinizde bir sorun mu var? Destek ekibimiz her zaman yanınızda.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

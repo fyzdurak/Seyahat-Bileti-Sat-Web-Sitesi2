@@ -1,0 +1,99 @@
+﻿@model IEnumerable<BiletSatisWebApp.Models.Trip>
+
+@{
+    ViewData["Title"] = "Otobüs Bileti Satış";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4 display-4 text-primary">Otobüs Bileti Ara</h2>
+
+    <form method="post" asp-action="Otobus" asp-controller="Bilet">
+        <div class="row g-3">
+
+            <select id="nereden" name="Nereden" class="form-select" required>
+                <option value="" selected disabled>Şehir seçiniz</option>
+                @foreach (var city in ViewBag.Cities)
+                {
+                    <option value="@city">@city</option>
+                }
+            </select>
+
+            <select id="nereye" name="Nereye" class="form-select" required>
+                <option value="" selected disabled>Şehir seçiniz</option>
+                @foreach (var city in ViewBag.Cities)
+                {
+                    <option value="@city">@city</option>
+                }
+            </select>
+
+
+            <div class="col-md-6">
+                <label for="gidisTarihi" class="form-label">Gidiş Tarihi</label>
+                <input type="date" id="gidisTarihi" name="GidisTarihi" class="form-control" required />
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label d-block">Yolculuk Türü</label>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="YolculukTuru" id="tekGidis" value="TekGidis" checked>
+                    <label class="form-check-label" for="tekGidis">Tek Gidiş</label>
+                </div>
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="radio" name="YolculukTuru" id="gidisDonus" value="GidisDonus">
+                    <label class="form-check-label" for="gidisDonus">Gidiş-Dönüş</label>
+                </div>
+            </div>
+
+            <div class="col-md-6" id="donusTarihiDiv" style="display:none;">
+                <label for="donusTarihi" class="form-label">Dönüş Tarihi</label>
+                <input type="date" id="donusTarihi" name="DonusTarihi" class="form-control" />
+            </div>
+
+            <div class="col-12  text-center mt-3 my-5">
+                <button type="submit" class="btn btn-primary px-5">Ara</button>
+            </div>
+
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        // Bugünün tarihini al ve min olarak ayarla
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById("gidisTarihi").setAttribute("min", today);
+        document.getElementById("donusTarihi").setAttribute("min", today);
+
+        // Gidiş tarihi seçildiğinde dönüş tarihini güncelle
+        document.getElementById("gidisTarihi").addEventListener("change", function () {
+            const gidis = this.value;
+            const donus = document.getElementById("donusTarihi");
+            donus.min = gidis; // dönüş tarihi en erken gidiş günü olabilir
+        });
+
+        // Yolculuk türüne göre dönüş tarihi alanını göster/gizle
+        document.addEventListener("DOMContentLoaded", function () {
+            const tekGidisRadio = document.getElementById("tekGidis");
+            const gidisDonusRadio = document.getElementById("gidisDonus");
+            const donusTarihiDiv = document.getElementById("donusTarihiDiv");
+            const donusTarihiInput = document.getElementById("donusTarihi");
+
+            function toggleDonusTarihi() {
+                if (gidisDonusRadio.checked) {
+                    donusTarihiDiv.style.display = "block";
+                    donusTarihiInput.required = true;
+                } else {
+                    donusTarihiDiv.style.display = "none";
+                    donusTarihiInput.required = false;
+                    donusTarihiInput.value = "";
+                }
+            }
+
+            tekGidisRadio.addEventListener("change", toggleDonusTarihi);
+            gidisDonusRadio.addEventListener("change", toggleDonusTarihi);
+
+            toggleDonusTarihi(); // Sayfa yüklendiğinde duruma göre göster/gizle
+        });
+    </script>
+}
+

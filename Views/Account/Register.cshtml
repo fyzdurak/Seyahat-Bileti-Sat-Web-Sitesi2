@@ -1,0 +1,44 @@
+﻿@model BiletSatisWebApp.Models.RegisterModel
+@{
+    ViewData["Title"] = "Kaydol";
+}
+
+<div class="container mt-5">
+    <h2 class="text-center display-4 text-primary">Kaydol</h2>
+
+    <form asp-action="Register" method="post" class="col-md-6 offset-md-3">
+        <div class="mb-3">
+            <label asp-for="FirstName" class="form-label">Ad</label>
+            <input asp-for="FirstName" class="form-control" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="LastName" class="form-label">Soyad</label>
+            <input asp-for="LastName" class="form-control" />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label">E-mail</label>
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label">Şifre</label>
+            <input asp-for="Password" type="password" class="form-control" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Kaydol</button>
+
+        <div class="text-center mt-3">
+            <a href="@Url.Action("Login", "Account")">Zaten hesabınız var mı? Giriş yapın</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

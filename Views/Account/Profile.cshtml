@@ -1,0 +1,59 @@
+﻿@model BiletSatisWebApp.Models.ProfileViewModel
+
+<div class="text-center">
+<div class="container mt-4">
+    <h2 class="display-4 text-primary">Profilim</h2>
+  
+    </div>
+    <div class="col-md-6 offset-3 mb-4 ">
+        <div class="p-4 shadow rounded h-100" style="background-color:#f3f8ff;">
+            <i class="bi bi-person-fill fs-1 text-info-emphasis mb-3"></i>
+            <p><strong>Ad:</strong> @Model.Ad</p>
+            <p><strong>Soyad:</strong> @Model.Soyad</p>
+            <p><strong>Email:</strong> @Model.Email</p>
+        </div>
+    </div>
+    
+    <h3 class="display-4 text-primary">Seyahatlerim</h3>
+    <div class="col-md-6 offset-3 mb-4">
+        <div class="p-4 shadow rounded h-100" style="background-color:#f3f8ff;">
+            <i class="bi bi-ticket-perforated fs-1 text-danger-emphasis mb-3"></i>
+            @if (Model.Trips != null && Model.Trips.Any())
+            {
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Kalkış</th>
+                            <th>Varış</th>
+                            <th>Kalkış Tarihi</th>
+                            <th>Kalkış Saati</th>
+                            <th>Ulaşım Türü</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var trip in Model.Trips)
+                        {
+                            <tr>
+                                <td>@trip.FromCity</td>
+                                <td>@trip.ToCity</td>
+                                <td>@trip.DepartureDate.ToString("dd.MM.yyyy")</td>
+                                <td>@trip.DepartureTime.ToString(@"hh\:mm")</td>
+                                <td>@trip.TransportType</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            else
+            {
+        <p>Henüz kayıtlı bir seyahatiniz bulunmamaktadır.</p>
+    }
+    </div>
+  </div>
+        <div class="mb-3">
+            <form method="post" asp-controller="Account" asp-action="Logout" style="display:inline;">
+                <button type="submit" class="btn btn-danger"><i class="bi bi-box-arrow-right"></i> Çıkış Yap</button>
+            </form>
+        </div>
+
+</div>

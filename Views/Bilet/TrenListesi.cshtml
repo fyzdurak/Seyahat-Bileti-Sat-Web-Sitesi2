@@ -1,0 +1,51 @@
+﻿@model BiletSatisWebApp.Models.ViewModel.TrenListesiVM
+<h2 class="mb-5 display-4 text-primary">Uçak Seferleri</h2>
+
+@{
+    if (Model == null)
+    {
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            Swal.fire({
+                icon: 'error',
+                title: 'Hata!',
+                text: 'Hatalı istek!'
+            });
+        </script>
+    }
+    else
+    {
+        <p class="mb-5">
+            @Model.Nereden → @Model.Nereye
+            (@Model.GidisTarihi.GetValueOrDefault().ToString("dd.MM.yyyy"))
+        </p>
+
+        <table class="mb-5 table table-striped">
+            <thead>
+                <tr>
+                    <th>Kalkış Şehri</th>
+                    <th>Varış Şehri</th>
+                    <th>Kalkış Saati</th>
+                    <th>Bilet Fiyatı</th>
+                    <th>Toplam Bilet</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var trip in Model.Trips)
+                {
+                    <tr>
+                        <td>@trip.FromCity</td>
+                        <td>@trip.ToCity</td>
+                        <td>@trip.DepartureTime</td>
+                        <td>@trip.Price ₺</td>
+                        <td>@trip.TicketCount</td>
+                        <td><a href="@Url.Action("KoltukSecimi", "Bilet", new { tripId = trip.Id })" class="btn btn-primary">Koltuk Seç</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+<!-- Geri Butonu -->
+<a href="@Url.Action("Tren", "Bilet")" class="mb-5 btn btn-secondary">← Geri</a>

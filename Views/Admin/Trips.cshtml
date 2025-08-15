@@ -1,0 +1,73 @@
+﻿@model BiletSatisWebApp.Models.AdminTripListVM
+
+@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<h2 class="mb-3 display-4 text-primary">Yaklaşan Seferler</h2>
+<a href="/Admin/SellTicket" class="mb-3 btn btn-success">Yeni Seyahat Ekle</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Kalkış</th>
+            <th>Varış</th>
+            <th>Gidiş Tarihi</th>
+            <th>Gidiş Saati</th>
+            <th>Ulaşım Türü</th>
+            <th>Toplam Bilet</th>
+            <th>Satılan Bilet</th>
+            <th>Fiyat</th>
+            <th>İşlemler</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var trip in Model.UpcomingTrips)
+        {
+            <tr>
+                <td>@trip.FromCity</td>
+                <td>@trip.ToCity</td>
+                <td>@trip.DepartureDate.ToShortDateString()</td>
+                <td>@trip.DepartureTime.ToString(@"hh\:mm")</td>
+                <td>@trip.TransportType</td>
+                <td>@trip.TicketCount</td>
+                <td>@trip.TicketsSold</td>
+                <td>@trip.Price ₺</td>
+                <td>
+                    <a href="/Admin/DeleteTrip/@trip.Id" class="btn btn-danger">Sil</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<h2 class="mb-3 display-4 text-danger">Geçmiş Seferler</h2>
+<table class="table mb-5">
+    <thead>
+        <tr>
+            <th>Kalkış</th>
+            <th>Varış</th>
+            <th>Gidiş Tarihi</th>
+            <th>Gidiş Saati</th>
+            <th>Ulaşım Türü</th>
+            <th>Toplam Bilet</th>
+            <th>Satılan Bilet</th>
+            <th>Fiyat</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var trip in Model.PastTrips)
+        {
+            <tr>
+                <td>@trip.FromCity</td>
+                <td>@trip.ToCity</td>
+                <td>@trip.DepartureDate.ToShortDateString()</td>
+                <td>@trip.DepartureTime.ToString(@"hh\:mm")</td>
+                <td>@trip.TransportType</td>
+                <td>@trip.TicketCount</td>
+                <td>@trip.TicketsSold</td>
+                <td>@trip.Price ₺</td>
+            </tr>
+        }
+    </tbody>
+</table>
