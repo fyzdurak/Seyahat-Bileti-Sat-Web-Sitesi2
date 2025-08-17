@@ -16,7 +16,14 @@ namespace BiletSatisWebApp.Controllers
         {
             _context = context;
         }
+        public async Task<IActionResult> GelenKutusu()
+        {
+            var mesajlar = await _context.IletisimMesajlar
+                .OrderByDescending(m => m.Tarih)
+                .ToListAsync();
 
+            return View(mesajlar);
+        }
         // İstatistik kartları için admin anasayfa
         public async Task<IActionResult> Index()
         {

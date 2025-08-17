@@ -2,6 +2,7 @@
 using BiletSatisWebApp.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
 namespace BiletSatisWebApp.Controllers
@@ -123,7 +124,7 @@ namespace BiletSatisWebApp.Controllers
                 Soyad = user.Soyad,
                 Email = user.Email,
                 UserType = user.UserType,
-                Trips = new List<Trip>() 
+                
             };
 
             return View(model);

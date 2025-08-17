@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 
 namespace BiletSatisWebApp.Models
 {
-    public class SeatSelectionRequest
+    public class SeatSelection
     {
+        public int Id { get; set; }
         public int TripId { get; set; }
-        [Required]
         public List<int> SelectedSeats { get; set; }
+        public DateTime SelectionDate { get; set; } = DateTime.Now;
     }
 }

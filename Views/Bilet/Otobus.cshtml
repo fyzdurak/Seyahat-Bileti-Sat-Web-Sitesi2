@@ -29,7 +29,7 @@
 
             <div class="col-md-6">
                 <label for="gidisTarihi" class="form-label">Gidiş Tarihi</label>
-                <input type="date" id="gidisTarihi" name="GidisTarihi" class="form-control" required />
+                <input type="date" id="gidisTarihi" name="GidisTarihi" class="form-control datepicker" required />
             </div>
 
             <div class="col-md-6">
@@ -59,6 +59,14 @@
 
 @section Scripts {
     <script>
+        document.getElementById('gidisTarihi').addEventListener('click', function() {
+            document.getElementById('gidisTarihi').showPicker(); // Modern tarayıcılarda çalışır
+        });
+
+        document.getElementById('donusTarihi').addEventListener('click', function() {
+            document.getElementById('donusTarihi').showPicker(); // Modern tarayıcılarda çalışır
+        });
+
         // Bugünün tarihini al ve min olarak ayarla
         const today = new Date().toISOString().split('T')[0];
         document.getElementById("gidisTarihi").setAttribute("min", today);

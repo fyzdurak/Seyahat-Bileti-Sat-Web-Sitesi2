@@ -62,6 +62,14 @@
 
 @section Scripts {
     <script>
+
+        document.getElementById('gidisTarihi').addEventListener('click', function() {
+            document.getElementById('gidisTarihi').showPicker(); // Modern tarayıcılarda çalışır
+        });
+
+        document.getElementById('donusTarihi').addEventListener('click', function() {
+            document.getElementById('donusTarihi').showPicker(); // Modern tarayıcılarda çalışır
+        });
         // Bugünün tarihi min olarak ayarla
         const today = new Date().toISOString().split('T')[0];
         document.getElementById("gidisTarihi").setAttribute("min", today);

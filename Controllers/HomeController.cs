@@ -1,5 +1,7 @@
+using BiletSatisWebApp.Data;
 using BiletSatisWebApp.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -8,10 +10,13 @@ namespace BiletSatisWebApp.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly ApplicationDbContext _context;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger, ApplicationDbContext context)
         {
             _logger = logger;
+            _context = context;
+
         }
 
         public IActionResult Index()
@@ -33,19 +38,24 @@ namespace BiletSatisWebApp.Controllers
         {
             if (ModelState.IsValid)
             {
-                
-                TempData["ShowModal"] = "true";
-                return RedirectToAction("Iletisim");
+                var mesaj = new IletisimMesaj
+                {
+                    AdSoyad = model.AdSoyad,
+                    Email = model.Email,
+                    Telefon = model.Telefon,
+                    Mesaj = model.Mesaj
+                };
+
+                _context.IletisimMesajlar.Add(mesaj);
+                _context.SaveChanges();
+
+                TempData["ShowModal"] = "true"; // Baþarý mesajý için
+                return RedirectToAction("GelenKutusu", "Admin");
             }
 
-            
             return View(model);
         }
-            public IActionResult Privacy()
-        {
-            return View();
-        }
-        
+
 
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()

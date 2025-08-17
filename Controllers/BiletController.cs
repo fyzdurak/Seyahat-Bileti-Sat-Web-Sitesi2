@@ -136,17 +136,19 @@ namespace BiletSatisWebApp.Controllers
         public ActionResult KoltukSecimi(int tripId)
         {
             var trip = GetTripById(tripId); // Implement this method to retrieve the trip by ID
+            var seatSelection = GetSelectedSeatbyTripID(tripId);
+
             if (trip == null)
             {
                 return Json(new { success = false, message = "Sefer bulunamadı!" });
             }
 
-            var selectedSeats = new List<int>(); // Initialize with any pre-selected seats if needed
+
 
             var koltukSecimiVM = new KoltukSecimiVM
             {
                 Trip = trip,
-                SelectedSeats = selectedSeats
+                SeatSelection= seatSelection
             };
 
             return View(koltukSecimiVM);
@@ -162,10 +164,26 @@ namespace BiletSatisWebApp.Controllers
             }
 
             // Save the selected seats to the database or session
-            //SaveSelectedSeats(request.TripId, request.SelectedSeats); // Implement this method to save the selected seats
+            var selectionID = SaveSelectedSeats(request.TripId, request.SelectedSeats); // Implement this method to save the selected seats
 
-            return Json(new { success = true, message = "Koltuk seçimi tamamlandı!" });
+            return Json(new { success = true, message = "Koltuk seçimi tamamlandı!", selectionId = selectionID });
         }
+
+        private int SaveSelectedSeats(int tripId, List<int> selectedSeats)
+        {
+            var seatSelection = new SeatSelection
+            {
+                TripId = tripId,
+                SelectedSeats = selectedSeats,
+                SelectionDate = DateTime.Now
+            };
+
+            _context.SeatSelections.Add(seatSelection);
+            _context.SaveChanges();
+
+            return seatSelection.Id;
+        }
+
 
         private Trip GetTripById(int tripId)
         {
@@ -176,7 +194,34 @@ namespace BiletSatisWebApp.Controllers
             return trip;
             //return new Trip { Id = tripId, FromCity = "Nereden", ToCity = "Nereye", DepartureTime = DateTime.Now.TimeOfDay, Price = 100, TicketCount = 30 };
         }
+        private SeatSelection GetSeatSelectionByID(int seatSelectionID)
+        {
+            // Implement logic to retrieve the trip by ID from your data source
 
+            var seatSelection = _context.SeatSelections.Where(p => p.Id == seatSelectionID).FirstOrDefault();
+
+            return seatSelection;
+            //return new Trip { Id = tripId, FromCity = "Nereden", ToCity = "Nereye", DepartureTime = DateTime.Now.TimeOfDay, Price = 100, TicketCount = 30 };
+        }
+        private List<SeatSelection> GetSelectedSeatbyTripID(int tripID)
+        {
+            // Implement logic to retrieve the trip by ID from your data source
+
+            var seatSelection = _context.SeatSelections.Where(p => p.TripId == tripID).ToList();
+
+            return seatSelection;
+            //return new Trip { Id = tripId, FromCity = "Nereden", ToCity = "Nereye", DepartureTime = DateTime.Now.TimeOfDay, Price = 100, TicketCount = 30 };
+        }
+
+        [HttpGet("/bilet/odeme/{id}")]
+        public IActionResult Odeme(int id)
+        {
+            OdemeVM vm = new OdemeVM();
+            vm.SeatSelection = GetSeatSelectionByID(id);
+            vm.trip = GetTripById(vm.SeatSelection.TripId);
+            vm.OdemeTutari=(float)(vm.trip.Price * vm.SeatSelection.SelectedSeats.Count());
+            return View(vm);
+        }
 
         [HttpGet]
         public IActionResult Ucak()

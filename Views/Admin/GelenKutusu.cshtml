@@ -1,0 +1,31 @@
+﻿@{
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+@model IEnumerable<BiletSatisWebApp.Models.IletisimMesaj>
+
+<div class="container mt-4">
+    <h2 class="display-4 text-primary">Gelen Mesajlar</h2>
+    <table class="table table-bordered table-hover mt-3">
+        <thead class="table-light">
+            <tr>
+                <th>Ad Soyad</th>
+                <th>Email</th>
+                <th>Telefon</th>
+                <th>Mesaj</th>
+                <th>Tarih</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var m in Model)
+            {
+                <tr>
+                    <td>@m.AdSoyad</td>
+                    <td>@m.Email</td>
+                    <td>@m.Telefon</td>
+                    <td>@m.Mesaj</td>
+                    <td>@m.Tarih.ToString("dd.MM.yyyy HH:mm")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

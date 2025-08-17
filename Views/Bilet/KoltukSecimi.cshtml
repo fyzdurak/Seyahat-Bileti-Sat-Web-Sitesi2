@@ -1,18 +1,18 @@
 @model BiletSatisWebApp.Models.ViewModel.KoltukSecimiVM
-<h2>Koltuk Seçimi</h2>
+<h2 class="display-4 text-primary">Koltuk Seçimi</h2>
 
 <p>
     Sefer: @Model.Trip.FromCity → @Model.Trip.ToCity
-    @* (@Model.Trip.DepartureTime.ToString("dd.MM.yyyy HH:mm")) *@
+    <br />
+    Saat:@Model.Trip.DepartureTime
 </p>
 
 <div id="bus-interior" class="bus-interior">
     <div class="bus-section">
-        <h3>Konteyner Koltukları</h3>
         <div class="seat-row">
             @for (int i = 1; i <= 4; i++)
             {
-                <button class="seat @(Model.SelectedSeats.Contains(i) ? "selected" : "")" data-seat-id="@i" onclick="selectSeat(@i)">
+                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
                     @i
                 </button>
             }
@@ -20,18 +20,17 @@
         <div class="seat-row">
             @for (int i = 5; i <= 8; i++)
             {
-                <button class="seat @(Model.SelectedSeats.Contains(i) ? "selected" : "")" data-seat-id="@i" onclick="selectSeat(@i)">
+                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
                     @i
                 </button>
             }
         </div>
     </div>
     <div class="bus-section">
-        <h3>İkinci Konteyner Koltukları</h3>
         <div class="seat-row">
             @for (int i = 9; i <= 12; i++)
             {
-                <button class="seat @(Model.SelectedSeats.Contains(i) ? "selected" : "")" data-seat-id="@i" onclick="selectSeat(@i)">
+                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
                     @i
                 </button>
             }
@@ -39,18 +38,17 @@
         <div class="seat-row">
             @for (int i = 13; i <= 16; i++)
             {
-                <button class="seat @(Model.SelectedSeats.Contains(i) ? "selected" : "")" data-seat-id="@i" onclick="selectSeat(@i)">
+                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
                     @i
                 </button>
             }
         </div>
     </div>
     <div class="bus-section">
-        <h3>Arka Koltuklar</h3>
         <div class="seat-row">
             @for (int i = 17; i <= 20; i++)
             {
-                <button class="seat @(Model.SelectedSeats.Contains(i) ? "selected" : "")" data-seat-id="@i" onclick="selectSeat(@i)">
+                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
                     @i
                 </button>
             }
@@ -58,18 +56,17 @@
         <div class="seat-row">
             @for (int i = 21; i <= 24; i++)
             {
-                <button class="seat @(Model.SelectedSeats.Contains(i) ? "selected" : "")" data-seat-id="@i" onclick="selectSeat(@i)">
+                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
                     @i
                 </button>
             }
         </div>
     </div>
     <div class="bus-section">
-        <h3>Galeri Koltukları</h3>
         <div class="seat-row">
             @for (int i = 25; i <= 30; i++)
             {
-                <button class="seat @(Model.SelectedSeats.Contains(i) ? "selected" : "")" data-seat-id="@i" onclick="selectSeat(@i)">
+                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
                     @i
                 </button>
             }
@@ -78,7 +75,7 @@
 </div>
 
 <!-- Geri Butonu -->
- <a href="@Url.Action("OtobusListesi", "Bilet", new { nereden = Model.Trip.FromCity, nereye = Model.Trip.ToCity, gidisTarihi = Model.Trip.DepartureDate.ToString("dd.MM.yyyy") })" class="btn btn-secondary">← Geri</a> 
+ <a href="@Url.Action("OtobusListesi", "Bilet", new { from = Model.Trip.FromCity, to = Model.Trip.ToCity, tarih = Model.Trip.DepartureDate.ToString("dd.MM.yyyy") })" class="btn btn-secondary">← Geri</a> 
 
 <!-- Devam Butonu -->
 <button id="continue-button" class="btn btn-primary" onclick="submitSelectedSeats()">Devam</button>
@@ -115,13 +112,14 @@
         })
         .then(response => response.json())
         .then(data => {
+            console.log(data);
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
                     title: 'Başarılı!',
                     text: 'Koltuk seçimi tamamlandı!'
                 }).then(() => {
-                    window.location.href = '@Url.Action("Odeme", "Bilet")'; // Redirect to payment page
+                    window.location.href = '/Bilet/Odeme/'+data.selectionId // Redirect to payment page
                 });
             } else {
                 Swal.fire({
@@ -138,6 +136,7 @@
                 text: 'Bir hata oluştu!'
             });
         });
+        
     }
 </script>
 
