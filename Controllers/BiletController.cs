@@ -15,6 +15,7 @@ namespace BiletSatisWebApp.Controllers
             _context = context;
         }
 
+        // Ana sayfa
         public async Task<IActionResult> Index()
         {
             var tickets = await _context.Trips
@@ -24,410 +25,294 @@ namespace BiletSatisWebApp.Controllers
             return View(tickets);
         }
 
-        [HttpGet]
-        public IActionResult Otobus()
+        #region === Yardımcı Metotlar ===
+
+        private async Task<List<string>> GetCitiesByTransportTypeAsync(string transportType)
         {
-            var fromCities = _context.Trips
-                .Where(t => t.TransportType == "Otobüs") // sadece otobüs seferleri
-                .Select(t => t.FromCity)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .Distinct()
-                .ToList(); // DB'den çekme
+            // 1. SQL’de çekilebilen kısım
+            var tripList = await _context.Trips
+                .Where(t => t.TransportType == transportType)
+                .Select(t => new { t.FromCity, t.ToCity })
+                .ToListAsync();
 
-            var toCities = _context.Trips
-                .Where(t => t.TransportType == "Otobüs") // sadece otobüs seferleri
-                .Select(t => t.ToCity)
+            // 2. Bellekte açıyoruz
+            var cities = tripList
+                .SelectMany(t => new[] { t.FromCity, t.ToCity })
                 .Where(c => !string.IsNullOrWhiteSpace(c))
-                .Distinct()
-                .ToList(); // DB'den çekme
-
-            // Birleştir ve tekrar distinct yapma
-            var cities = fromCities
-                .Concat(toCities)
                 .Distinct()
                 .OrderBy(c => c)
                 .ToList();
 
-            // Hiç sefer yoksa fallback şehir listesi
             if (!cities.Any())
-            {
                 cities = new List<string> { "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya" };
-            }
 
-            ViewBag.Cities = cities;
+            return cities;
+        }
+
+
+        private async Task<List<Trip>> GetTripsAsync(string transportType, string from, string to, DateTime date)
+        {
+            var start = date.Date;
+            var end = start.AddDays(1);
+
+            return await _context.Trips
+                .Where(t =>
+                    t.TransportType == transportType &&
+                    t.FromCity == from &&
+                    t.ToCity == to &&
+                    t.DepartureDate >= start &&
+                    t.DepartureDate < end)
+                .ToListAsync();
+        }
+
+
+        private async Task<Trip?> GetTripByIdAsync(int id)
+        {
+            return await _context.Trips.FirstOrDefaultAsync(t => t.Id == id);
+        }
+
+        private async Task<SeatSelection?> GetSeatSelectionByIdAsync(int id)
+        {
+            return await _context.SeatSelections.FirstOrDefaultAsync(s => s.Id == id);
+        }
+
+        private async Task<List<SeatSelection>> GetSelectedSeatsByTripIdAsync(int tripId)
+        {
+            return await _context.SeatSelections
+                .Where(s => s.TripId == tripId)
+                .ToListAsync();
+        }
+
+        private async Task<int> SaveSelectedSeatsAsync(int tripId, List<int> selectedSeats)
+        {
+            var existingSelection = await _context.SeatSelections.FirstOrDefaultAsync(s => s.TripId == tripId);
+
+            if (existingSelection != null)
+            {
+                // 2. Eğer varsa, koltuk listesini GÜNCELLE
+                existingSelection.SelectedSeats = selectedSeats.Select(s => s.ToString()).ToList();
+                existingSelection.SelectionDate = DateTime.Now;
+                _context.SeatSelections.Update(existingSelection);
+                await _context.SaveChangesAsync();
+                return existingSelection.Id;
+            }
+            else
+            {
+                // 3. Yoksa, YENİ KAYIT OLUŞTUR
+                var seatSelection = new SeatSelection
+                {
+                    TripId = tripId,
+                    SelectedSeats = selectedSeats.Select(s => s.ToString()).ToList(),
+                    SelectionDate = DateTime.Now
+                };
+
+                _context.SeatSelections.Add(seatSelection);
+                await _context.SaveChangesAsync();
+                return seatSelection.Id;
+            }
+        }
+
+
+        #endregion
+
+        #region === Otobüs ===
+
+        [HttpGet]
+        public async Task<IActionResult> Otobus()
+        {
+            ViewBag.Cities = await GetCitiesByTransportTypeAsync("Otobüs");
             return View();
         }
 
         [HttpPost]
         public IActionResult Otobus(string Nereden, string Nereye, DateTime GidisTarihi, string YolculukTuru)
         {
-            var fromCities = _context.Trips
-                .Where(t => t.TransportType == "Otobüs")
-                .Select(t => t.FromCity)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .ToList();
-
-            var toCities = _context.Trips
-                .Where(t => t.TransportType == "Otobüs")
-                .Select(t => t.ToCity)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .ToList();
-
-            ViewBag.Cities = fromCities
-                .Concat(toCities)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToList();
-
-            // Arama sonucu
-            var trips = _context.Trips
-                .Where(t =>
-                    t.FromCity == Nereden &&
-                    t.ToCity == Nereye &&
-                    t.DepartureDate.Date == GidisTarihi.Date)
-                .ToList();
-
-            // OtobusListesi sayfasına yönlendir, verileri TempData ile taşı
-            //TempData["Trips"] = System.Text.Json.JsonSerializer.Serialize(trips);
-            //TempData["Nereden"] = Nereden;
-            //TempData["Nereye"] = Nereye;
-            //TempData["GidisTarihi"] = GidisTarihi;
-
-            return RedirectToAction("OtobusListesi", new { from = Nereden, to = Nereye, tarih = GidisTarihi.ToString("dd.MM.yyyy") });
+            return RedirectToAction("OtobusListesi", new
+            {
+                from = Nereden,
+                to = Nereye,
+                tarih = GidisTarihi.ToString("dd.MM.yyyy")
+            });
         }
 
-        public IActionResult OtobusListesi(string from, string to, string tarih)
+        public async Task<IActionResult> OtobusListesi(string from, string to, string tarih)
         {
-            OtobusListesiVM _vm = new OtobusListesiVM();
+            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to) || string.IsNullOrEmpty(tarih))
+                return View();
 
-            //List<Trip> trips = new List<Trip>();
-            //if (TempData["Trips"] != null)
-            //{
-            //    _vm.Trips= JsonSerializer.Deserialize<List<Trip>>(TempData["Trips"].ToString());
-            //}
+            DateTime dt = Convert.ToDateTime(tarih);
+            var trips = await GetTripsAsync("Otobüs", from, to, dt);
 
-            #region alternatif yol
-            List<Trip> trips = new List<Trip>();
-            if (from != null && to != null && tarih != null)
+            var vm = new OtobusListesiVM
             {
-                DateTime dt = Convert.ToDateTime(tarih);
-
-                // Arama sonucu
-                var tripsResults = _context.Trips
-                    .Where(t =>
-                        t.FromCity == from &&
-                        t.ToCity == to &&
-                        t.DepartureDate.Date == dt)
-                    .ToList();
-                _vm.Trips = tripsResults;
-                #endregion
-
-                _vm.Nereden = from;
-                _vm.Nereye = to;
-                _vm.GidisTarihi = dt;
-
-
-                return View(_vm);
-            }
-            else return View();
-
-        }
-        [HttpGet]
-        public ActionResult KoltukSecimi(int tripId)
-        {
-            var trip = GetTripById(tripId); // Implement this method to retrieve the trip by ID
-            var seatSelection = GetSelectedSeatbyTripID(tripId);
-
-            if (trip == null)
-            {
-                return Json(new { success = false, message = "Sefer bulunamadı!" });
-            }
-
-
-
-            var koltukSecimiVM = new KoltukSecimiVM
-            {
-                Trip = trip,
-                SeatSelection= seatSelection
+                Trips = trips,
+                Nereden = from,
+                Nereye = to,
+                GidisTarihi = dt
             };
 
-            return View(koltukSecimiVM);
-        }
-
-        [HttpPost]
-        public ActionResult KoltukSecimi([FromBody] SeatSelectionRequest request)
-        {
-            var trip = GetTripById(request.TripId); // Implement this method to retrieve the trip by ID
-            if (trip == null)
-            {
-                return Json(new { success = false, message = "Sefer bulunamadı!" });
-            }
-
-            // Save the selected seats to the database or session
-            var selectionID = SaveSelectedSeats(request.TripId, request.SelectedSeats); // Implement this method to save the selected seats
-
-            return Json(new { success = true, message = "Koltuk seçimi tamamlandı!", selectionId = selectionID });
-        }
-
-        private int SaveSelectedSeats(int tripId, List<int> selectedSeats)
-        {
-            var seatSelection = new SeatSelection
-            {
-                TripId = tripId,
-                SelectedSeats = selectedSeats,
-                SelectionDate = DateTime.Now
-            };
-
-            _context.SeatSelections.Add(seatSelection);
-            _context.SaveChanges();
-
-            return seatSelection.Id;
-        }
-
-
-        private Trip GetTripById(int tripId)
-        {
-            // Implement logic to retrieve the trip by ID from your data source
-
-            var trip = _context.Trips.Where(p => p.Id == tripId).FirstOrDefault();
-
-            return trip;
-            //return new Trip { Id = tripId, FromCity = "Nereden", ToCity = "Nereye", DepartureTime = DateTime.Now.TimeOfDay, Price = 100, TicketCount = 30 };
-        }
-        private SeatSelection GetSeatSelectionByID(int seatSelectionID)
-        {
-            // Implement logic to retrieve the trip by ID from your data source
-
-            var seatSelection = _context.SeatSelections.Where(p => p.Id == seatSelectionID).FirstOrDefault();
-
-            return seatSelection;
-            //return new Trip { Id = tripId, FromCity = "Nereden", ToCity = "Nereye", DepartureTime = DateTime.Now.TimeOfDay, Price = 100, TicketCount = 30 };
-        }
-        private List<SeatSelection> GetSelectedSeatbyTripID(int tripID)
-        {
-            // Implement logic to retrieve the trip by ID from your data source
-
-            var seatSelection = _context.SeatSelections.Where(p => p.TripId == tripID).ToList();
-
-            return seatSelection;
-            //return new Trip { Id = tripId, FromCity = "Nereden", ToCity = "Nereye", DepartureTime = DateTime.Now.TimeOfDay, Price = 100, TicketCount = 30 };
-        }
-
-        [HttpGet("/bilet/odeme/{id}")]
-        public IActionResult Odeme(int id)
-        {
-            OdemeVM vm = new OdemeVM();
-            vm.SeatSelection = GetSeatSelectionByID(id);
-            vm.trip = GetTripById(vm.SeatSelection.TripId);
-            vm.OdemeTutari=(float)(vm.trip.Price * vm.SeatSelection.SelectedSeats.Count());
             return View(vm);
         }
 
+        #endregion
+
+        #region === Koltuk Seçimi ===
+
         [HttpGet]
-        public IActionResult Ucak()
+        public async Task<IActionResult> KoltukSecimi(int tripId)
         {
-            var fromCities = _context.Trips
-               .Where(t => t.TransportType == "Uçak") // sadece otobüs seferleri
-               .Select(t => t.FromCity)
-               .Where(c => !string.IsNullOrWhiteSpace(c))
-               .Distinct()
-               .ToList(); // DB'den çekme
+            var trip = await GetTripByIdAsync(tripId);
+            var seatSelection = (await GetSelectedSeatsByTripIdAsync(tripId)).FirstOrDefault() ?? new SeatSelection();
 
-            var toCities = _context.Trips
-                .Where(t => t.TransportType == "Uçak") // sadece otobüs seferleri
-                .Select(t => t.ToCity)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .Distinct()
-                .ToList(); // DB'den çekme
 
-            // Birleştir ve tekrar distinct yapma
-            var cities = fromCities
-                .Concat(toCities)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToList();
+            if (trip == null)
+                return Json(new { success = false, message = "Sefer bulunamadı!" });
 
-            // Hiç sefer yoksa fallback şehir listesi
-            if (!cities.Any())
+            var vm = new KoltukSecimiVM
             {
-                cities = new List<string> { "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya" };
-            }
+                Trip = trip,
+                SeatSelection = seatSelection
+            };
 
-            ViewBag.Cities = cities;
+            return View(vm);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> KoltukSecimi([FromBody] SeatSelectionRequest request)
+        {
+            var trip = await GetTripByIdAsync(request.TripId);
+            if (trip == null)
+                return Json(new { success = false, message = "Sefer bulunamadı!" });
+
+            var selectionId = await SaveSelectedSeatsAsync(request.TripId, request.SelectedSeats);
+
+            return Json(new { success = true, message = "Koltuk seçimi tamamlandı!", selectionId });
+        }
+
+        #endregion
+
+        #region === Ödeme ===
+
+        
+        [HttpGet("/bilet/odeme/{id}")]
+        public async Task<IActionResult> Odeme(int id)
+        {
+            var seatSelection = await GetSeatSelectionByIdAsync(id);
+            if (seatSelection == null)
+                return NotFound("Seçim bulunamadı!");
+
+            var trip = await GetTripByIdAsync(seatSelection.TripId);
+            if (trip == null)
+                return NotFound("Sefer bulunamadı!");
+            var selectedSeatsList = seatSelection?.SelectedSeats?.Select(s => s).ToList() ?? new List<string>();
+            
+            var vm = new OdemeVM
+            {
+                TripId = trip.Id,
+                FromCity = trip.FromCity,
+                ToCity = trip.ToCity,
+                Price = trip.Price,
+
+                // Seats: int üretiyorduk, string bekleniyorsa string'e çevir
+                Seats = Enumerable.Range(1, trip.TicketCount)
+                      .Select(x => x.ToString())
+                      .ToList(),
+
+                // BookedSeats zaten string listesi ise direkt kullan; null ise boş string listesi
+                BookedSeats = trip.BookedSeats ?? new List<string>(),
+
+                //SelectedSeatsJsonString = System.Text.Json.JsonSerializer.Serialize(selectedSeatsList),
+                SelectedSeats = selectedSeatsList
+            };
+
+
+            return View(vm);
+        }
+
+
+        #endregion
+
+        #region === Uçak ===
+
+        [HttpGet]
+        public async Task<IActionResult> Ucak()
+        {
+            ViewBag.Cities = await GetCitiesByTransportTypeAsync("Uçak");
             return View();
         }
 
         [HttpPost]
         public IActionResult Ucak(string Nereden, string Nereye, DateTime GidisTarihi, string YolculukTuru)
         {
-            var fromCities = _context.Trips
-                .Where(t => t.TransportType == "Uçak")
-                .Select(t => t.FromCity)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .ToList();
-
-            var toCities = _context.Trips
-                .Where(t => t.TransportType == "Uçak")
-                .Select(t => t.ToCity)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .ToList();
-
-            ViewBag.Cities = fromCities
-                .Concat(toCities)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToList();
-
-            // Arama sonucu
-            var trips = _context.Trips
-                .Where(t =>
-                    t.FromCity == Nereden &&
-                    t.ToCity == Nereye &&
-                    t.DepartureDate.Date == GidisTarihi.Date)
-                .ToList();
-
-
-            return RedirectToAction("UcakListesi", new { from = Nereden, to = Nereye, tarih = GidisTarihi.ToString("dd.MM.yyyy") });
-        }
-
-        public IActionResult UcakListesi(string from, string to, string tarih)
-        {
-            UcakListesiVM _vm = new UcakListesiVM();
-
-            //List<Trip> trips = new List<Trip>();
-            //if (TempData["Trips"] != null)
-            //{
-            //    _vm.Trips= JsonSerializer.Deserialize<List<Trip>>(TempData["Trips"].ToString());
-            //}
-
-            #region alternatif yol
-            List<Trip> trips = new List<Trip>();
-            if (from != null && to != null && tarih != null)
+            return RedirectToAction("UcakListesi", new
             {
-                DateTime dt = Convert.ToDateTime(tarih);
-
-                // Arama sonucu
-                var tripsResults = _context.Trips
-                    .Where(t =>
-                        t.FromCity == from &&
-                        t.ToCity == to &&
-                        t.DepartureDate.Date == dt)
-                    .ToList();
-                _vm.Trips = tripsResults;
-                #endregion
-
-                _vm.Nereden = from;
-                _vm.Nereye = to;
-                _vm.GidisTarihi = dt;
-
-
-                return View(_vm);
-            }
-            else return View();
+                from = Nereden,
+                to = Nereye,
+                tarih = GidisTarihi.ToString("dd.MM.yyyy")
+            });
         }
+
+        public async Task<IActionResult> UcakListesi(string from, string to, string tarih)
+        {
+            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to) || string.IsNullOrEmpty(tarih))
+                return View();
+
+            DateTime dt = Convert.ToDateTime(tarih);
+            var trips = await GetTripsAsync("Uçak", from, to, dt);
+
+            var vm = new UcakListesiVM
+            {
+                Trips = trips,
+                Nereden = from,
+                Nereye = to,
+                GidisTarihi = dt
+            };
+
+            return View(vm);
+        }
+
+        #endregion
+
+        #region === Tren ===
 
         [HttpGet]
-        public IActionResult Tren()
+        public async Task<IActionResult> Tren()
         {
-            var fromCities = _context.Trips
-                .Where(t => t.TransportType == "Tren") // sadece otobüs seferleri
-                .Select(t => t.FromCity)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .Distinct()
-                .ToList(); // DB'den çekme
-
-            var toCities = _context.Trips
-                .Where(t => t.TransportType == "Tren") // sadece otobüs seferleri
-                .Select(t => t.ToCity)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .Distinct()
-                .ToList(); // DB'den çekme
-
-            // Birleştir ve tekrar distinct yapma
-            var cities = fromCities
-                .Concat(toCities)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToList();
-
-            // Hiç sefer yoksa fallback şehir listesi
-            if (!cities.Any())
-            {
-                cities = new List<string> { "İstanbul", "Ankara", "İzmir", "Bursa", "Antalya" };
-            }
-
-            ViewBag.Cities = cities;
+            ViewBag.Cities = await GetCitiesByTransportTypeAsync("Tren");
             return View();
         }
 
         [HttpPost]
         public IActionResult Tren(string Nereden, string Nereye, DateTime GidisTarihi, string YolculukTuru)
         {
-            var fromCities = _context.Trips
-                .Where(t => t.TransportType == "Tren")
-                .Select(t => t.FromCity)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .ToList();
-
-            var toCities = _context.Trips
-                .Where(t => t.TransportType == "Tren")
-                .Select(t => t.ToCity)
-                .Where(c => !string.IsNullOrWhiteSpace(c))
-                .ToList();
-
-            ViewBag.Cities = fromCities
-                .Concat(toCities)
-                .Distinct()
-                .OrderBy(c => c)
-                .ToList();
-
-            // Arama sonucu
-            var trips = _context.Trips
-                .Where(t =>
-                    t.FromCity == Nereden &&
-                    t.ToCity == Nereye &&
-                    t.DepartureDate.Date == GidisTarihi.Date)
-                .ToList();
-
-
-            return RedirectToAction("TrenListesi", new { from = Nereden, to = Nereye, tarih = GidisTarihi.ToString("dd.MM.yyyy") });
-        }
-        public IActionResult TrenListesi(string from, string to, string tarih)
-        {
-            TrenListesiVM _vm = new TrenListesiVM();
-
-            //List<Trip> trips = new List<Trip>();
-            //if (TempData["Trips"] != null)
-            //{
-            //    _vm.Trips= JsonSerializer.Deserialize<List<Trip>>(TempData["Trips"].ToString());
-            //}
-
-            #region alternatif yol
-            List<Trip> trips = new List<Trip>();
-            if (from != null && to != null && tarih != null)
+            return RedirectToAction("TrenListesi", new
             {
-                DateTime dt = Convert.ToDateTime(tarih);
-
-                // Arama sonucu
-                var tripsResults = _context.Trips
-                    .Where(t =>
-                        t.FromCity == from &&
-                        t.ToCity == to &&
-                        t.DepartureDate.Date == dt)
-                    .ToList();
-                _vm.Trips = tripsResults;
-                #endregion
-
-                _vm.Nereden = from;
-                _vm.Nereye = to;
-                _vm.GidisTarihi = dt;
-
-
-                return View(_vm);
-            }
-            else return View();
-
+                from = Nereden,
+                to = Nereye,
+                tarih = GidisTarihi.ToString("dd.MM.yyyy")
+            });
         }
 
+        public async Task<IActionResult> TrenListesi(string from, string to, string tarih)
+        {
+            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to) || string.IsNullOrEmpty(tarih))
+                return View();
+
+            DateTime dt = Convert.ToDateTime(tarih);
+            var trips = await GetTripsAsync("Tren", from, to, dt);
+
+            var vm = new TrenListesiVM
+            {
+                Trips = trips,
+                Nereden = from,
+                Nereye = to,
+                GidisTarihi = dt
+            };
+
+            return View(vm);
+        }
+
+        #endregion
     }
 }
+

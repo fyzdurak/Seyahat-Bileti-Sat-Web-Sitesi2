@@ -1,127 +1,211 @@
-﻿<!-- Views\Bilet\Odeme.cshtml -->
-@{
-    @model BiletSatisWebApp.Models.ViewModel.OdemeVM
-}
+﻿@model BiletSatisWebApp.Models.ViewModel.OdemeVM
 
 <h2 class="text-center mt-4 display-4 text-primary">Ödeme İşlemi</h2>
 
 <div class="container mt-5">
     <div class="row justify-content-center">
+
+        <!-- Sol: Koltuk Seçimi ve Ödeme Listesi -->
+        <p>C# Count Testi: @Model.SelectedSeats.Count</p>
+        <p>C# İçerik Testi (JSON Formatında): @Html.Raw(Json.Serialize(Model.SelectedSeats))</p>
         <div class="col-md-6">
             <h4 class="text-primary">Sefer Bilgileri</h4>
             <p>
-                Sefer: @Model.trip.FromCity → @Model.trip.ToCity<br />
-                Saat: @Model.trip.DepartureTime
+                Sefer: @Model.FromCity → @Model.ToCity<br />
+                Fiyat: @Model.Price ₺
             </p>
-            <p>
-                Seçilen Koltuklar (@(Model.SeatSelection.SelectedSeats.Count()) adet koltuk):
-            </p>
-            <ul class="list-group">
-                @foreach (var item in Model.SeatSelection.SelectedSeats)
-                {
-                    <li class="list-group-item">
-                        Koltuk @item (@Model.trip.Price ₺)
-                        <input type="text" class="form-control mt-1" placeholder="Yolcu Ad Soyad giriniz." />
-                    </li>
-                }
-            </ul>
-            <p class="mt-3">Ödenecek Tutar: @Model.OdemeTutari ₺</p>
+
+            <h5>Koltuk Seçimi</h5>
+            <div id="seatGrid" class="d-flex flex-wrap gap-2 mb-3"></div>
+
+            <p>Seçilen Koltuklar:</p>
+            <ul class="list-group" id="seatList"></ul>
+            @* <p>Seçilen Koltuklar: @Model.SelectedSeats.Count adet</p> *@
+
+            <p class="mt-3">Ödenecek Tutar: <span id="totalPrice">0 ₺</span></p>
         </div>
+
+        <!-- Sağ: Ödeme Formu -->
         <div class="col-md-6">
             <h4 class="text-primary">Ödeme Bilgileri</h4>
             <form id="paymentForm">
                 <div class="mb-3">
-                    <label for="name" class="form-label">Kart Üzerindeki İsim</label>
+                    <label class="form-label">Kart Üzerindeki İsim</label>
                     <input type="text" class="form-control" id="name" placeholder="Ad Soyad" required>
                 </div>
 
                 <div class="mb-3">
-                    <label for="number" class="form-label">Kart Numarası</label>
+                    <label class="form-label">Kart Numarası</label>
                     <input type="text" class="form-control" id="number" placeholder="0000 0000 0000 0000" required pattern="\d{4} \d{4} \d{4} \d{4}">
                 </div>
 
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <label for="month" class="form-label">Ay</label>
+                        <label class="form-label">Ay</label>
                         <select id="month" class="form-select" required>
                             <option value="" disabled selected>Ay</option>
-                            <option value="01">01</option>
-                            <option value="02">02</option>
-                            <option value="03">03</option>
-                            <option value="04">04</option>
-                            <option value="05">05</option>
-                            <option value="06">06</option>
-                            <option value="07">07</option>
-                            <option value="08">08</option>
-                            <option value="09">09</option>
-                            <option value="10">10</option>
-                            <option value="11">11</option>
-                            <option value="12">12</option>
+                            @for (int i = 1; i <= 12; i++)
+                            {
+                                <option value="@i.ToString("00")">@i.ToString("00")</option>
+                            }
                         </select>
                     </div>
+
                     <div class="col-md-4 mb-3">
-                        <label for="year" class="form-label">Yıl</label>
+                        <label class="form-label">Yıl</label>
                         <select id="year" class="form-select" required>
                             <option value="" disabled selected>Yıl</option>
-                            <option value="2025">2025</option>
-                            <option value="2026">2026</option>
-                            <option value="2027">2027</option>
-                            <option value="2028">2028</option>
-                            <option value="2029">2029</option>
+                            @for (int y = DateTime.Now.Year; y <= DateTime.Now.Year + 5; y++)
+                            {
+                                <option value="@y">@y</option>
+                            }
                         </select>
                     </div>
+
                     <div class="col-md-4 mb-3">
-                        <label for="cvv" class="form-label">CVV</label>
+                        <label class="form-label">CVV</label>
                         <input type="text" class="form-control" id="cvv" maxlength="3" placeholder="***" required pattern="\d{3}">
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="installment" class="form-label">Taksit</label>
-                    <select id="installment" class="form-select" required>
-                        <option value="" disabled selected>Taksit Seçiniz</option>
-                        <option value="1">Tek Çekim</option>
-                        <option value="3">3 Taksit</option>
-                        <option value="6">6 Taksit</option>
-                        <option value="9">9 Taksit</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn btn-primary w-100">Ödemeye Devam Et</button>
+                <button type="submit" class="btn btn-primary w-100">Ödemeyi Tamamla</button>
             </form>
         </div>
     </div>
 </div>
+<div id="seatData" style="display:none;">
+    @Model.SelectedSeats.Count
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
-    document.getElementById('paymentForm').addEventListener('submit', function (event) {
-        event.preventDefault();
+       document.addEventListener("DOMContentLoaded", function(){
+        
+        const seats = @Html.Raw(Json.Serialize(Model.Seats));
+        const bookedSeats = @Html.Raw(Json.Serialize(Model.BookedSeats));
+        const price = @Model.Price;
+        const seatGrid = document.getElementById("seatGrid");
+        const seatList = document.getElementById("seatList");
+        const totalPriceEl = document.getElementById("totalPrice");
+        const selectedSeats = @Html.Raw(Json.Serialize(Model.SelectedSeats));
 
-        const name = document.getElementById('name').value;
-        const number = document.getElementById('number').value;
-        const month = document.getElementById('month').value;
-        const year = document.getElementById('year').value;
-        const cvv = document.getElementById('cvv').value;
-        const installment = document.getElementById('installment').value;
+        const currentSelection = [...selectedSeats];
 
-        if (!name || !number || !month || !year || !cvv || !installment) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Hata!',
-                text: 'Lütfen tüm ödeme bilgilerini doldurun.'
+        console.log("C#'tan Gelen Koltuklar:", selectedSeats);
+        console.log("Mevcut Seçim Listesi:", currentSelection);
+
+        // Koltukları oluştur
+        seats.forEach(seat => {
+            const btn = document.createElement("button");
+            btn.innerText = seat;
+
+            if(bookedSeats.includes(seat)){
+                btn.disabled = true;
+                btn.className = "btn btn-secondary m-1";
+            } else if(currentSelection.includes(seat)){
+                btn.className = "btn btn-success m-1";
+            } else {
+                btn.className = "btn btn-outline-primary m-1";
+            }
+
+            btn.addEventListener("click", function(){
+                if(currentSelection.includes(seat)){
+                    currentSelection.splice(currentSelection.indexOf(seat),1);
+                    btn.className = "btn btn-outline-primary m-1";
+                } else {
+                    currentSelection.push(seat);
+                    btn.className = "btn btn-success m-1";
+                }
+                updateSeatList();
+                updateTotalPrice();
             });
-            return;
+
+            seatGrid.appendChild(btn);
+        });
+
+        function updateSeatList(){
+            seatList.innerHTML = "";
+
+            if (currentSelection.length === 0) {
+                seatList.innerHTML = "<li class='list-group-item'>Henüz koltuk seçilmedi.</li>";
+                return;
+            }
+            currentSelection.forEach(seat => {
+                const li = document.createElement("li");
+                li.className = "list-group-item d-flex justify-content-between align-items-center";
+                li.innerHTML = `
+                    <span>Koltuk: <strong>${seat}</strong></span>
+                    <span class="badge bg-primary rounded-pill">${price} ₺</span>
+                `;
+                seatList.appendChild(li);
+            });
+        }
+            
+        
+
+        function updateTotalPrice() {
+            const total = currentSelection.length * price;
+            totalPriceEl.innerText = total + " ₺";
         }
 
-        // Simulate payment processing
-        Swal.fire({
-            icon: 'success',
-            title: 'Ödeme Başarılı!',
-            text: 'Ödeme işleminiz başarıyla gerçekleştirilmiştir. İyi yolculuklar dileriz!'
-        }).then(() => {
-            window.location.href = '/' // Redirect to homepage or another page
+        updateSeatList();
+        updateTotalPrice();
+
+        // Ödeme formu
+        const form = document.getElementById("paymentForm");
+        
+        form.addEventListener("submit", function(e){
+            e.preventDefault();
+
+            const name = document.getElementById("name").value.trim();
+            const number = document.getElementById("number").value.trim();
+            const month = document.getElementById("month").value;
+            const year = document.getElementById("year").value;
+            const cvv = document.getElementById("cvv").value.trim();
+
+            if(!name || !number || !month || !year || !cvv){
+                Swal.fire({icon:'error', title:'Hata!', text:'Lütfen tüm ödeme bilgilerini doldurun.'});
+                return;
+            }
+
+            if(currentSelection.length === 0){
+                Swal.fire({icon:'error', title:'Hata!', text:'Lütfen en az bir koltuk seçiniz.'});
+                return;
+            }
+
+            // POST ile ödeme tamamla
+            fetch('@Url.Action("CompletePayment", "Trip")',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({ TripId:@Model.TripId, PaidSeats:currentSelection })
+            }).then(r=>r.json())
+            .then(data=>{
+                if(data.success){
+                    Swal.fire({icon:'success', title:'Ödeme Başarılı!', text:'İyi yolculuklar!'}).then(()=>{
+                        window.location.href='/';
+                    });
+                }
+            }).catch(()=>{
+                Swal.fire({icon:'error', title:'Hata!', text:'Sunucu ile iletişim kurulamadı.'});
+            });
         });
+
+        // CVV sadece sayı olsun
+        const cvvInput = document.getElementById("cvv");
+        cvvInput.addEventListener("input", function(){
+            this.value = this.value.replace(/\D/g,'');
+        });
+
     });
 </script>
+
+
+
+
+
+
+
+
+
+
+

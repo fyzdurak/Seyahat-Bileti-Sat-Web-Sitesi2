@@ -4,6 +4,7 @@ using BiletSatisWebApp.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace BiletSatisWebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251118054433_KoltukSecimiSutunuDuzeltildi")]
+    partial class KoltukSecimiSutunuDuzeltildi
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -178,6 +181,11 @@ namespace BiletSatisWebApp.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("SelectedSeatsJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("SelectedSeats");
+
                     b.Property<DateTime>("SelectionDate")
                         .HasColumnType("datetime2");
 
@@ -188,7 +196,11 @@ namespace BiletSatisWebApp.Migrations
 
                     b.HasIndex("TripId");
 
-                    b.ToTable("SeatSelections");
+                    b.ToTable("SeatSelections", t =>
+                        {
+                            t.Property("SelectedSeats")
+                                .HasColumnName("SelectedSeats1");
+                        });
                 });
 
             modelBuilder.Entity("BiletSatisWebApp.Models.Trip", b =>

@@ -1,16 +1,15 @@
-using BiletSatis.Models;
+﻿using BiletSatis.Models;
 using BiletSatisWebApp.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 1. DbContext ve SQL Server ba�lant�s�
+// 1️⃣ Veritabanı bağlantısı (SQL Server)
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// 2. Identity servisi (kay�t & giri�)
+// 2️⃣ Identity (Kullanıcı ve Rol yönetimi)
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {
     options.SignIn.RequireConfirmedAccount = false;
@@ -18,37 +17,54 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 .AddEntityFrameworkStores<ApplicationDbContext>()
 .AddDefaultTokenProviders();
 
-// 3. MVC, Session, Cache vb.
+// 3️⃣ MVC + Session + Cache + HttpContextAccessor
 builder.Services.AddControllersWithViews();
-builder.Services.AddSession();
-builder.Services.AddDistributedMemoryCache();
+builder.Services.AddDistributedMemoryCache(); // <-- önce cache
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
+// 4️⃣ Role ve admin kullanıcı oluşturma
 using (var scope = app.Services.CreateScope())
 {
     var serviceProvider = scope.ServiceProvider;
     await CreateRolesAndAdminUser(serviceProvider);
 }
 
-// 4. Middleware s�ralamas� �ok �nemli:
-app.UseStaticFiles();
+// 5️⃣ Middleware sırası (çok önemli)
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    app.UseHsts();
+}
 
+app.UseHttpsRedirection();
+app.UseStaticFiles();
 
 app.UseRouting();
 
-app.UseAuthentication();  
+//  ⚠️ Sıra önemlidir:
+app.UseAuthentication();
 app.UseAuthorization();
+app.UseSession(); // authorization'dan sonra, endpoint'ten önce
 
-app.UseSession();
-
+// 6️⃣ Varsayılan rota
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.Run();
 
+
+// ---------------------------
+// 7️⃣ Admin kullanıcı oluşturma metodu
+// ---------------------------
 async Task CreateRolesAndAdminUser(IServiceProvider serviceProvider)
 {
     var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
@@ -58,8 +74,7 @@ async Task CreateRolesAndAdminUser(IServiceProvider serviceProvider)
 
     foreach (var roleName in roleNames)
     {
-        var roleExist = await roleManager.RoleExistsAsync(roleName);
-        if (!roleExist)
+        if (!await roleManager.RoleExistsAsync(roleName))
         {
             await roleManager.CreateAsync(new IdentityRole(roleName));
         }
@@ -75,10 +90,11 @@ async Task CreateRolesAndAdminUser(IServiceProvider serviceProvider)
             UserName = adminEmail,
             Email = adminEmail,
             Ad = "Admin",
-            Soyad = "Kullan�c�",
-            UserType = "Admin"  // UserType alan�
+            Soyad = "Kullanıcı",
+            UserType = "Admin"
         };
-        string adminPassword = "Admin123!";  // G��l� bir �ifre
+
+        string adminPassword = "Admin123!";
         var createAdmin = await userManager.CreateAsync(admin, adminPassword);
 
         if (createAdmin.Succeeded)
@@ -87,4 +103,5 @@ async Task CreateRolesAndAdminUser(IServiceProvider serviceProvider)
         }
     }
 }
+
 

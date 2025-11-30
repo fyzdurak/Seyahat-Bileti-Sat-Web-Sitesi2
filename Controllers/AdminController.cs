@@ -49,18 +49,31 @@ namespace BiletSatisWebApp.Controllers
 
         // Bilet satışa çıkarma işlemi (POST)
         [HttpPost]
-        public IActionResult SellTicket(Trip model)
+        public IActionResult SellTicket(Trip model, string DepartureTime)
         {
+            // Kalkış tarihi bugünden önce olamaz
             if (model.DepartureDate.Date < DateTime.Today)
             {
                 ModelState.AddModelError("DepartureDate", "Bilet kalkış tarihi bugünden önce olamaz.");
                 return View(model);
             }
 
+            // DepartureTime string olarak geliyor, TimeSpan'e çevir
+            if (!TimeSpan.TryParse(DepartureTime, out var time))
+            {
+                ModelState.AddModelError("DepartureTime", "Geçerli bir kalkış saati giriniz.");
+                return View(model);
+            }
+            model.DepartureTime = time;
+
             if (ModelState.IsValid)
             {
                 model.SaleDate = DateTime.Now;
                 model.TicketsSold = 0; // Başlangıçta hiç satılmadı
+
+                // SeatLayout boşsa default değer ata
+                model.SeatLayout = model.SeatLayout ?? "";
+
                 _context.Trips.Add(model);
                 _context.SaveChanges();
                 TempData["Success"] = "Bilet başarıyla satışa çıkarıldı.";
@@ -68,34 +81,6 @@ namespace BiletSatisWebApp.Controllers
             }
             return View(model);
         }
-
-        // Mevcut seyahat işlemleri:
-
-        public IActionResult Trips()
-        {
-            var now = DateTime.Now;
-
-            var trips = _context.Trips.ToList(); // Verileri belleğe alıyoruz
-
-            var model = new AdminTripListVM
-            {
-                UpcomingTrips = trips
-                    .Where(t => t.DepartureDate.Add(t.DepartureTime) >= now)
-                    .OrderBy(t => t.DepartureDate)
-                    .ThenBy(t => t.DepartureTime)
-                    .ToList(),
-
-                PastTrips = trips
-                    .Where(t => t.DepartureDate.Add(t.DepartureTime) < now)
-                    .OrderByDescending(t => t.DepartureDate)
-                    .ThenByDescending(t => t.DepartureTime)
-                    .ToList()
-            };
-
-            return View(model);
-        }
-
-
 
         public IActionResult DeleteTrip(int id)
         {

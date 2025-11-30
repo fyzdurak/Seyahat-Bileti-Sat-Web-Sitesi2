@@ -37,7 +37,7 @@
 
     <div class="mb-3">
         <label asp-for="DepartureTime" class="form-label">Kalkış Saati</label>
-        <input asp-for="DepartureTime" type="time" class="form-control" />
+        <input asp-for="DepartureTime" type="time" class="form-control" required/>
         <span asp-validation-for="DepartureTime" class="text-danger"></span>
     </div>
 
@@ -53,6 +53,30 @@
         <span asp-validation-for="TransportType" class="text-danger"></span>
     </div>
     <div class="mb-3">
+        <label asp-for="SeatLayout" class="form-label">Koltuk Düzeni</label>
+        <input asp-for="SeatLayout" class="form-control" readonly id="SeatLayout" />
+    </div>
+
+    <script>
+        document.querySelector("select[name='TransportType']").addEventListener("change", function () {
+            const layoutInput = document.getElementById("SeatLayout");
+            switch (this.value) {
+                case "Otobüs":
+                    layoutInput.value = "2+2";
+                    break;
+                case "Tren":
+                    layoutInput.value = "2+3";
+                    break;
+                case "Uçak":
+                    layoutInput.value = "3+3";
+                    break;
+                default:
+                    layoutInput.value = "";
+            }
+        });
+    </script>
+
+    <div class="mb-3">
         <label asp-for="TicketCount" class="form-label">Bilet Sayısı</label>
         <input asp-for="TicketCount" type="number" min="1" class="form-control" />
         <span asp-validation-for="TicketCount" class="text-danger"></span>
@@ -60,7 +84,7 @@
 
     <div class="form-group mb-3 ">
         <label for="Price">Bilet Fiyatı (₺)</label>
-        <input type="number" step="0.01" class="form-control" name="Price" required />
+        <input asp-for="Price" type="number" step="0.01" class="form-control" required />
     </div>
 
     <button type="submit" class="btn btn-success mb-5">Satışa Çıkar</button>

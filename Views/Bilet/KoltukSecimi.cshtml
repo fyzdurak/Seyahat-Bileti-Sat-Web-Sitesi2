@@ -1,126 +1,163 @@
 @model BiletSatisWebApp.Models.ViewModel.KoltukSecimiVM
+
 <h2 class="display-4 text-primary">Koltuk Seçimi</h2>
 
 <p>
-    Sefer: @Model.Trip.FromCity → @Model.Trip.ToCity
-    <br />
-    Saat:@Model.Trip.DepartureTime
+    Sefer: @Model.Trip.FromCity → @Model.Trip.ToCity <br />
+    Tarih: @Model.Trip.DepartureDate.ToString("dd.MM.yyyy") <br />
+    Saat: @Model.Trip.DepartureTime <br />
+    Ulaşım Türü: @Model.Trip.TransportType
 </p>
 
-<div id="bus-interior" class="bus-interior">
-    <div class="bus-section">
-        <div class="seat-row">
-            @for (int i = 1; i <= 4; i++)
+<div class="seat-layout">
+    @{
+        var seatCount = Model.Trip.TicketCount;
+        var transport = Model.Trip.TransportType?.ToLower();
+        Func<int, bool> isSelected = seatId =>
+        Model.SeatSelection != null &&
+        Model.SeatSelection.SelectedSeats != null &&
+        Model.SeatSelection.SelectedSeats.Contains(seatId.ToString());
+
+    }
+
+    @if (transport == "otobüs")
+    {
+        <!--  Otobüs 2+2 düzen -->
+        for (int i = 1; i <= seatCount; i++)
+        {
+            <button class="seat @(isSelected(i) ? "selected" : "")"
+                    data-seat-id="@i"
+                    onclick="selectSeat(@i)"
+                    @(isSelected(i) ? "disabled" : "")>
+                @i
+            </button>
+
+            @* Her 2 koltuktan sonra koridor boşluğu *@
+            if (i % 2 == 0)
             {
-                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
-                    @i
-                </button>
+                <span style="display:inline-block;width:30px;"></span>
             }
-        </div>
-        <div class="seat-row">
-            @for (int i = 5; i <= 8; i++)
+
+            @* Her 4 koltuktan sonra yeni satır *@
+            if (i % 4 == 0)
             {
-                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
-                    @i
-                </button>
+                <br />
             }
-        </div>
-    </div>
-    <div class="bus-section">
-        <div class="seat-row">
-            @for (int i = 9; i <= 12; i++)
+        }
+    }
+    else if (transport == "uçak")
+    {
+        <!--  Uçak 3+3 düzen -->
+        for (int i = 1; i <= seatCount; i++)
+        {
+            <button class="seat @(isSelected(i) ? "selected" : "")"
+                    data-seat-id="@i"
+                    onclick="selectSeat(@i)"
+                    @(isSelected(i) ? "disabled" : "")>
+                @i
+            </button>
+
+            @* 3 koltuktan sonra koridor boşluğu *@
+            if (i % 3 == 0)
             {
-                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
-                    @i
-                </button>
+                <span style="display:inline-block;width:50px;"></span>
             }
-        </div>
-        <div class="seat-row">
-            @for (int i = 13; i <= 16; i++)
+
+            @* 6 koltuktan sonra yeni satır *@
+            if (i % 6 == 0)
             {
-                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
-                    @i
-                </button>
+                <br />
             }
-        </div>
-    </div>
-    <div class="bus-section">
-        <div class="seat-row">
-            @for (int i = 17; i <= 20; i++)
+        }
+    }
+    else if (transport == "tren")
+    {
+        <!--  Tren 2+2 düzen, her 8 koltukta bir vagon boşluğu -->
+        for (int i = 1; i <= seatCount; i++)
+        {
+            <button class="seat @(isSelected(i) ? "selected" : "")"
+                    data-seat-id="@i"
+                    onclick="selectSeat(@i)"
+                    @(isSelected(i) ? "disabled" : "")>
+                @i
+            </button>
+
+            if (i % 2 == 0)
             {
-                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
-                    @i
-                </button>
+                <span style="display:inline-block;width:30px;"></span>
             }
-        </div>
-        <div class="seat-row">
-            @for (int i = 21; i <= 24; i++)
+            if (i % 4 == 0)
             {
-                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
-                    @i
-                </button>
+                <br />
             }
-        </div>
-    </div>
-    <div class="bus-section">
-        <div class="seat-row">
-            @for (int i = 25; i <= 30; i++)
+            if (i % 8 == 0)
             {
-                <button @(Model.SeatSelection.Any(s => s.SelectedSeats.Contains(i)) ? "disabled class=seat selected" : "class=seat") data-seat-id="@i" onclick="selectSeat(@i)">
-                    @i
-                </button>
+                <div style="margin:20px 0;"></div>
             }
-        </div>
-    </div>
+        }
+    }
+    else
+    {
+        <p class="text-danger">Ulaşım türü tanımlı değil veya desteklenmiyor.</p>
+    }
 </div>
 
 <!-- Geri Butonu -->
- <a href="@Url.Action("OtobusListesi", "Bilet", new { from = Model.Trip.FromCity, to = Model.Trip.ToCity, tarih = Model.Trip.DepartureDate.ToString("dd.MM.yyyy") })" class="btn btn-secondary">← Geri</a> 
+<a href="@Url.Action("OtobusListesi", "Bilet", new { from = Model.Trip.FromCity, to = Model.Trip.ToCity, tarih = Model.Trip.DepartureDate.ToString("dd.MM.yyyy") })" class="btn btn-secondary mt-4">← Geri</a>
 
 <!-- Devam Butonu -->
-<button id="continue-button" class="btn btn-primary" onclick="submitSelectedSeats()">Devam</button>
+<button id="continue-button" class="btn btn-primary mt-4" onclick="submitSelectedSeats()">Devam</button>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+
+    // Koltuk seçme – sadece görsel seçim
     function selectSeat(seatId) {
         const seatButton = document.querySelector(`button[data-seat-id='${seatId}']`);
-        if (seatButton.classList.contains('selected')) {
-            seatButton.classList.remove('selected');
-        } else {
-            seatButton.classList.add('selected');
-        }
+        seatButton.classList.toggle('selected');
     }
 
+    // Koltukları kaydetme – ödeme ekranına aktarım BURADAN çalışır
     function submitSelectedSeats() {
-        const selectedSeats = Array.from(document.querySelectorAll('.seat.selected')).map(seat => seat.getAttribute('data-seat-id'));
+
+        // Seçili koltukları topla
+        const selectedSeats = Array
+            .from(document.querySelectorAll('.seat.selected'))
+            .map(s => s.getAttribute('data-seat-id'));
+
         if (selectedSeats.length === 0) {
             Swal.fire({
                 icon: 'warning',
                 title: 'Uyarı!',
-                text: 'Lütfen bir koltuk seçiniz!'
+                text: 'Lütfen en az bir koltuk seçiniz!'
             });
             return;
         }
 
-        // Post the selected seats to the server
-        fetch('@Url.Action("KoltukSecimi", "Bilet")', {
+        // Fetch ile JSON POST – burası düzeltilmiş hali
+        fetch('/Bilet/KoltukSecimi', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ tripId: @Model.Trip.Id, selectedSeats: selectedSeats })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tripId: @Model.Trip.Id,
+                selectedSeats: selectedSeats.map(x => parseInt(x))
+            })
         })
         .then(response => response.json())
         .then(data => {
-            console.log(data);
+
             if (data.success) {
                 Swal.fire({
                     icon: 'success',
                     title: 'Başarılı!',
                     text: 'Koltuk seçimi tamamlandı!'
                 }).then(() => {
-                    window.location.href = '/Bilet/Odeme/'+data.selectionId // Redirect to payment page
+
+                    // Ödeme ekranına SELECTION ID ile git
+                    // Böylece ödeme ekranı doğru kaydı okur
+                    window.location.href = '/Bilet/Odeme/' + data.selectionId;
                 });
+
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -129,57 +166,54 @@
                 });
             }
         })
-        .catch(error => {
+        .catch(() => {
             Swal.fire({
                 icon: 'error',
                 title: 'Hata!',
-                text: 'Bir hata oluştu!'
+                text: 'Sunucu ile iletişim kurulamadı.'
             });
         });
-        
     }
+
 </script>
 
 <style>
-    .bus-interior {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin-top: 20px;
-    }
-
-    .bus-section {
-        margin-bottom: 20px;
+    .seat-layout {
         text-align: center;
-    }
-
-    .seat-row {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 10px;
+        margin-top: 30px;
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        display: inline-block;
     }
 
     .seat {
         width: 50px;
         height: 50px;
-        border: 1px solid #000;
-        background-color: #fff;
+        margin: 5px;
+        background-color: white;
+        border: 2px solid #555;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 16px;
+        transition: all 0.2s ease;
+        font-weight: bold;
     }
 
-    .selected {
-        background-color: #007bff;
-        color: #fff;
-    }
+        .seat:hover {
+            background-color: #cce5ff;
+        }
 
-    .aisle {
-        width: 20px;
-        height: 50px;
-        background-color: #ccc;
-    }
+        .seat.selected {
+            background-color: #007bff;
+            color: white;
+            border-color: #0056b3;
+        }
 
-    .bus-section h3 {
-        margin-bottom: 10px;
-    }
+        .seat:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
 </style>
+
+
